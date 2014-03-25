@@ -1,0 +1,77 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+#
+# Provides : ffmpeg-daemon
+# Required-Start : $network 
+# Required-Stop  : $network
+# Default-Start  : 2 3 4 5
+# Default-Stop   : 0 1 6
+# Short-Description : ffmpeg daemon
+# Description : ffmpeg daemon
+#
+### END INIT INFO
+
+prog="ffmpeg daemon"
+config_file="/etc/ffmpeg-daemon.conf"
+pid_file="/var/run/ffmpeg-daemon.pid"
+
+if [ "$(id -u)" != "0" ]; then
+    echo "This script must be run as root"
+    exit 1
+fi
+
+start() {
+    if [ ! -f $config_file ]; then
+        echo "Configuration file missing"
+        exit 1
+    fi
+    if [ -f $pid_file ]; then
+        ffmpeg_pid=`cat $pid_file`
+        kill -0 $ffmpeg_pid > /dev/null 2>&1
+        if [ $? -eq 0 ]; then    
+            echo "ffmpeg daemon is currently active"
+            exit 1
+        else
+            rm $pid_file > /dev/null 2>&1
+        fi
+    fi
+    $prog > /dev/null 2>&1 &
+    echo "ffmpeg daemon started"
+}
+
+stop() {
+    if [ -f $pid_file ]; then
+        ffmpeg_pid=`cat $pid_file`
+        kill -2 $ffmpeg_pid > /dev/null 2>&1
+        rm -r $pid_file > /dev/null 2>&1
+        if [ $? -ne 0 ]; then
+            echo "ffmpeg daemon is not running but PID file exists and was deleted"
+        else
+            echo "ffmpeg daemon stopped"
+	fi
+    else
+        echo "ffmpeg daemon is not started"
+        exit 1
+    fi
+}
+
+case "$1" in
+    start)
+        start
+        exit 0
+    ;;
+    stop)
+        stop
+        exit 0
+    ;;
+    restart)
+        stop
+        start
+        exit 0
+    ;;
+    **)
+        echo "Usage: $0 {start|stop|restart}" 1>&2
+        exit 1
+    ;;
+esac

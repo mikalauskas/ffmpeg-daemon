@@ -1,0 +1,3 @@
+# Set settings and rename to ffmpeg-daemon.conf
+# usage: [options] [[infile options] -i infile]... {[outfile options] outfile}...
+options="-re -i http://freetv.com/ -c:v libx264 -preset veryfast -profile:v baseline -level 4.0 -b:v 3600k -minrate 3600k -maxrate 3600k -bufsize 6000k -vf yadif -s "1280x720" -r 25 -c:a copy -f mpegts tcp://127.0.0.1:9999/flvplayback/test"

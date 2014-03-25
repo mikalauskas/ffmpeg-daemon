@@ -1,0 +1,26 @@
+#!/bin/sh
+running=true
+config="/etc/ffmpeg-daemon.conf"
+pid_file="/var/run/ffmpeg-daemon.pid"
+log_file="/var/log/ffmpeg-daemon.log"
+source $config
+if [ -z $log_level ]; then
+    log_level="error"
+fi
+while $running; do
+    ffmpeg -v "$log_level" $options >> $log_file 2>&1 &
+    ffmpeg_pid=$!
+    echo $ffmpeg_pid
+    echo $ffmpeg_pid > $pid_file
+    if [ $? -eq 0 ]; then
+        wait $ffmpeg_pid > /dev/null 2>&1
+        if [ ! -f $pid_file ]; then
+            running=false
+            rm $pid_file > /dev/null 2>&1
+        fi
+    else
+        echo "Unable to write PID file"
+        rm $pid_file > /dev/null 2>&1
+        exit 1
+    fi
+done
